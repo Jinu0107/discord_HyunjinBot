@@ -9,7 +9,7 @@ const riot = require('./riot');
 const defaultData = { queueType: 'UNRANKED', tier: 'UNRANKED', leaguePoints: '', rank: '', wins: 0, losses: 0 };
 const tierObj = { IRON: 100, BRONZE: 600, SILVER: 1100, GOLD: 1600, PLATINUM: 2100, DIAMOND: 2600, MASTER: 3100, GRANDMASTER: 3600, CHALLENGER: 4100 };
 const rankObj = { I: 400, II: 300, III: 200, IV: 100 };
-
+const image = `https://i.ibb.co/Z6p4PH2/image.jpg`;
 
 mongoose.connect(config.url);
 const db = mongoose.connection;
@@ -25,7 +25,7 @@ clinet.on("ready", () => {
 });
 
 
-clinet.on("message", (msg) => {
+clinet.on("message", async (msg) => {
     const MSG = msg.content;
     const CMD = MSG.split(" ")[0];
     const PARAMS = MSG.split(" ").filter((x, idx) => idx >= 1);
@@ -47,6 +47,8 @@ clinet.on("message", (msg) => {
         case "!갱신":
             msg.reply("갱신중...");
             updateSummonerData(msg);
+            break;
+        case "!삭제":
             break;
     }
 });
@@ -106,21 +108,31 @@ async function showRanking(msg) {
         const embed = new Discord.MessageEmbed()
             .setColor('GREEN')
             .setTitle('양디랭킹 (LOL)');
+        let unrank_idx = 0;
         userList.forEach((user, idx) => {
+            let ranking = idx + 1;
+            if (user.leaguePoints == '') {
+                if (unrank_idx == 0) {
+                    unrank_idx = idx + 1;
+                }
+                ranking = "공동" + unrank_idx;
+            }
+
             embed.addFields(
                 {
                     name: `\u200B`,
                     value:
-                        "` " + (idx + 1) + "등 `    " +
+                        "` " + ranking + "등 `    " +
                         "` " + user.userName + " `    " +
                         "` " + user.summonerName + " `    " +
                         "` " + user.tier + " " + user.leaguePoints + "점 `      " +
                         "` " + user.winRate + " `    " +
-                        "` " + user.gameCount + "판 `    " +
-                        "       [자세히보기](https://www.op.gg/summoner/userName=" + user.summonerName + ") "
+                        "` " + user.gameCount + "판 `"
                 },
             );
         });
+        embed.setTimestamp()
+            .setFooter('박현진봇 V2', image)
         msg.channel.send(embed);
     } catch (error) {
         msg.reply("데이터불러오는중 오류 발생");
